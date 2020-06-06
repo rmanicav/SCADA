@@ -1,6 +1,6 @@
-#Date:05/22/2020
+#Date:05/25/2020
 #Name: Rajesh Manicavasagam
-#Description : One class SVM classification for NSL-KDD data
+#Description :voter classifier for NSL-KDD data
 
 #@attribute 'duration' real
 #@attribute 'protocol_type' {'tcp','udp', 'icmp'} 
@@ -47,21 +47,69 @@
 #from matplotlib import pyplot as plt
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-from sklearn import preprocessing
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import classification_report
-from sklearn.metrics import plot_confusion_matrix
-from sklearn.metrics import ConfusionMatrixDisplay
-import matplotlib.pyplot as plt
+#import seaborn as sb
 from sklearn.model_selection import train_test_split
+from sklearn import preprocessing
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score,confusion_matrix,classification_report,plot_confusion_matrix
+import matplotlib.pyplot as plt
 
-#Dtree
-def dtree(train_X,train_Y,test_X,test_Y):
+ 
+#calculate max,min,mean and std value for a feature
+def calculate(df1,feature):
+ print('Maximum  is:',df1[feature].max())
+ print('Mimnimum is:',df1[feature].min())
+ print('Mean is:',df1[feature].mean())
+ print('std  is:',df1[feature].std())
+
+def main():
+ nRowsRead = 10 # specify 'None' if want to read whole file
+# KDD training data 125974
+ df = pd.read_csv('NIDS\KDDAll.txt', delimiter=',', nrows = 125974)
+ df = df[['duration','protocol_type','service','src_bytes','dst_bytes','num_failed_logins','serror_rate','srv_serror_rate','rerror_rate',
+ 'srv_rerror_rate','dst_host_serror_rate','dst_host_srv_serror_rate' ,'dst_host_rerror_rate','dst_host_srv_rerror_rate','label']]
+ 
+ le = preprocessing.LabelEncoder()
+ df = df.apply(le.fit_transform)
+
+ #print(df.head(10))
+ x = df.drop('label',axis=1)
+ y = df['label']
+
+ train_X,test_X,train_Y,test_Y = train_test_split(x,y,test_size=0.25,random_state=40)
+
+ #Naive Bayes
+ gnb = GaussianNB()
+ #random forest
+ rf = RandomForestClassifier(n_estimators =100,bootstrap=True)
+ #KNN
+ knn = KNeighborsClassifier(n_neighbors=1)
+ #dtree
  dt = DecisionTreeClassifier()
- dt.fit(train_X,train_Y)
- pred_Y = dt.predict(test_X)
- print(confusion_matrix(test_Y,pred_Y))
+ #voting classifer
+ #hard voting - Majority
+ #vclf =VotingClassifier(estimators=[('gnb', gnb), ('rf', rf), ('knn', knn),('dt',dt)], voting='hard')
+ #vclf = vclf.fit(x,y)
+ #pred_Y = vclf.predict(test_X)
+ #print(classification_report(test_Y,pred_Y))
+ #CM = confusion_matrix(test_Y,pred_Y)
+ #TN = CM[0][0]
+ #FN = CM[1][0]
+ #TP = CM[1][1]
+ #FP = CM[0][1]
+ #FPR = FP/(FP + TN)
+ #print("FPR:",FPR)
+ #plot_confusion_matrix(vclf,test_X,test_Y)
+ #plt.show()
+
+ #hard voting - Mean
+ vclf =VotingClassifier(estimators=[('gnb', gnb), ('rf', rf), ('knn', knn),('dt',dt)], voting='soft')
+ vclf = vclf.fit(x,y)
+ pred_Y = vclf.predict(test_X)
+ print(classification_report(test_Y,pred_Y))
  CM = confusion_matrix(test_Y,pred_Y)
  TN = CM[0][0]
  FN = CM[1][0]
@@ -69,39 +117,9 @@ def dtree(train_X,train_Y,test_X,test_Y):
  FP = CM[0][1]
  FPR = FP/(FP + TN)
  print("FPR:",FPR)
- print(classification_report(test_Y,pred_Y))
- disp = ConfusionMatrixDisplay(confusion_matrix=CM)
- disp.plot(include_values=True)
- #
- # plt.show()
+ plot_confusion_matrix(vclf,test_X,test_Y)
+ plt.show()
 
- #plot_confusion_matrix(oneclass,test_X,test_Y)
- #plt.show() 
-
-#calculate max,min,mean and std value for a feature
-def calculate(df1,feature):
- print('Maximum  is:',df1[feature].max())
- print('Mimnimum is:',df1[feature].min())
- print('Mean is:',df1[feature].mean())
- print('std  is:',df1[feature].std())
- 
-def main():
- # KDD training data 125974
- df = pd.read_csv('NIDS\KDDAll.txt', delimiter=',', nrows = 125974)
- df = df[['duration','protocol_type','service','src_bytes','dst_bytes','num_failed_logins','serror_rate','srv_serror_rate','rerror_rate',
- 'srv_rerror_rate','dst_host_serror_rate','dst_host_srv_serror_rate' ,'dst_host_rerror_rate','dst_host_srv_rerror_rate','label']]
- le = preprocessing.LabelEncoder()
- df = df.apply(le.fit_transform)
- x = df.drop('label',axis=1)
- y = df['label']
- train_X,test_X,train_Y,test_Y = train_test_split(x,y,test_size=0.40,random_state=40)
- 
-  #Dtree
- print('Dtree - start')
- dtree(train_X,train_Y,test_X,test_Y)
- print('DTree -- completed')
-
- 
 
 if __name__== "__main__":
   main()

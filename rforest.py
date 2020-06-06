@@ -54,13 +54,13 @@ from sklearn.metrics import plot_confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 
-#Dtree
-def dtree(train_X,train_Y,test_X,test_Y):
- dt = DecisionTreeClassifier()
- dt.fit(train_X,train_Y)
- pred_Y = dt.predict(test_X)
+#random forest
+def rforest(train_X,train_Y,test_X,test_Y):
+ clf = RandomForestClassifier(n_estimators =100,bootstrap=True)
+ clf.fit(train_X,train_Y)
+ pred_Y = clf.predict(test_X)
  print(confusion_matrix(test_Y,pred_Y))
  CM = confusion_matrix(test_Y,pred_Y)
  TN = CM[0][0]
@@ -70,8 +70,9 @@ def dtree(train_X,train_Y,test_X,test_Y):
  FPR = FP/(FP + TN)
  print("FPR:",FPR)
  print(classification_report(test_Y,pred_Y))
- disp = ConfusionMatrixDisplay(confusion_matrix=CM)
- disp.plot(include_values=True)
+ plot_confusion_matrix(clf,test_X,test_Y)
+ plt.show()
+
  #
  # plt.show()
 
@@ -94,11 +95,11 @@ def main():
  df = df.apply(le.fit_transform)
  x = df.drop('label',axis=1)
  y = df['label']
- train_X,test_X,train_Y,test_Y = train_test_split(x,y,test_size=0.40,random_state=40)
+ train_X,test_X,train_Y,test_Y = train_test_split(x,y,test_size=0.25,random_state=40)
  
   #Dtree
  print('Dtree - start')
- dtree(train_X,train_Y,test_X,test_Y)
+ rforest(train_X,train_Y,test_X,test_Y)
  print('DTree -- completed')
 
  
